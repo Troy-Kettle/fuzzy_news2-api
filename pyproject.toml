@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "fuzzy-news2"
+version = "0.1.0"
+description = "Fuzzy logic implementation of the National Early Warning Score 2 (NEWS-2)"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "fuzzy_news2"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = "^1.24.0"
+# scikit-fuzzy removed due to Python 3.12 incompatibility
+fastapi = "^0.115.0"
+uvicorn = "^0.23.2"
+pydantic = "^2.5.0"
+httpx = "^0.27.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.7.0"
+isort = "^5.12.0"
+flake8 = "^6.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+start-api = "fuzzy_news2.api:start"
