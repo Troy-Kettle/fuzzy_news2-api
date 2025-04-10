@@ -2,39 +2,85 @@
 
 A fuzzy logic implementation of the National Early Warning Score 2 (NEWS-2) system for early detection of clinical deterioration.
 
+![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
+## Overview
+
+Fuzzy NEWS-2 enhances the traditional NEWS-2 clinical assessment tool by applying fuzzy logic to create smoother transitions between risk categories. Instead of relying on sharp thresholds that can lead to abrupt changes in risk assessment, this implementation allows for more nuanced evaluation of patient status.
+
 ## About NEWS-2
 
-The National Early Warning Score 2 (NEWS-2) is a standardized system developed by the Royal College of Physicians for assessing and responding to acute illness. It uses six physiological parameters:
+The National Early Warning Score 2 (NEWS-2) is a standardized system developed by the Royal College of Physicians for assessing acute illness severity. It evaluates six physiological parameters:
 
-1. Respiratory rate
-2. Oxygen saturation
-3. Systolic blood pressure
-4. Pulse rate
-5. Level of consciousness or new confusion
-6. Temperature
+| Parameter | Measurement |
+|-----------|-------------|
+| Respiratory rate | breaths per minute |
+| Oxygen saturation | % |
+| Systolic blood pressure | mmHg |
+| Pulse rate | beats per minute |
+| Level of consciousness | Alert/Voice/Pain/Unresponsive |
+| Temperature | °C |
 
-## Fuzzy Logic Approach
+Each parameter is assigned a score based on its deviation from normal values. The total NEWS-2 score determines the risk category and corresponding clinical response.
 
-This implementation uses fuzzy logic to enhance the traditional NEWS-2 system. Instead of discrete thresholds, fuzzy logic allows for a gradual transition between categories, potentially providing more nuanced clinical decision support.
+## Advantages of Fuzzy Logic Approach
 
-Benefits of the fuzzy approach include:
-- Handling uncertainty in measurements
-- Smoother transitions between risk categories
-- Potential for more personalized risk assessment
+Our implementation enhances the traditional NEWS-2 system with fuzzy logic, providing several benefits:
+
+- **Gradient transitions**: Smoother transitions between risk categories rather than sudden jumps
+- **Improved handling of borderline cases**: More accurate risk assessment for patients with values near thresholds
+- **Uncertainty management**: Better handling of measurement uncertainties
+- **Personalization potential**: Framework for more personalized risk assessment
+
+## Features
+
+- Complete NEWS-2 implementation based on official guidelines
+- Fuzzy logic enhancement for more nuanced scoring
+- Command-line interface for quick calculations
+- REST API for integration with other systems
+- Comprehensive Python package for easy incorporation into healthcare applications
 
 ## Installation
 
-This project uses Poetry for dependency management.
+### Prerequisites
+
+- Python 3.12+
+- [Poetry](https://python-poetry.org/) for dependency management
+
+### Installation Steps
 
 ```bash
-# Install Poetry if you haven't already
-curl -sSL https://install.python-poetry.org | python3 -
+# Clone the repository
+git clone https://github.com/your-username/fuzzy-news2.git
+cd fuzzy-news2
 
-# Install dependencies
+# Install dependencies with Poetry
 poetry install
 ```
 
 ## Usage
+
+### Command Line Interface
+
+Calculate NEWS-2 score for a patient:
+
+```bash
+# Activate the Poetry environment
+poetry shell
+
+# Calculate a NEWS-2 score
+python -m fuzzy_news2 calculate \
+  --respiratory-rate 22 \
+  --oxygen-saturation 94 \
+  --systolic-bp 110 \
+  --pulse 105 \
+  --consciousness A \
+  --temperature 38.5 \
+  --supplemental-oxygen
+```
+
+### Python API
 
 ```python
 from fuzzy_news2 import FuzzyNEWS2
@@ -59,27 +105,109 @@ print(f"Risk Category: {result.risk_category}")
 print(f"Recommended Response: {result.recommended_response}")
 ```
 
-## API Server
+### REST API
 
-To start the API server for integration with an Electron front-end:
+Start the API server:
 
 ```bash
-poetry run start-api
+poetry run python -m fuzzy_news2 api
 ```
 
-This will start a FastAPI server on http://localhost:8000
+This starts a FastAPI server on http://localhost:8000 with the following endpoints:
 
-## Electron Integration
+- `POST /api/calculate`: Calculate NEWS-2 score
+- `GET /api/history/{patient_id}`: Get patient history
+- `GET /api/statistics/{patient_id}`: Get patient statistics
+- `GET /api/health`: Health check endpoint
 
-This project is designed to be easily integrated with an Electron front-end. The API provides all necessary endpoints for:
+Example API request:
 
-- Calculating NEWS-2 scores
-- Retrieving history of assessments
-- Visualizing trends over time
+```bash
+curl -X POST http://localhost:8000/api/calculate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_id": "TEST-001",
+    "respiratory_rate": 22,
+    "oxygen_saturation": 94,
+    "systolic_bp": 110,
+    "pulse": 105,
+    "consciousness": "A",
+    "temperature": 38.5,
+    "supplemental_oxygen": false
+  }'
+```
 
-See the `/docs` endpoint when running the API server for complete API documentation.
+## API Documentation
+
+When the API server is running, full API documentation is available at:
+- OpenAPI UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Technical Details
+
+### Custom Fuzzy Logic Implementation
+
+This project implements a custom fuzzy logic system compatible with Python 3.12+, as scikit-fuzzy is not currently compatible with newer Python versions. The implementation includes:
+
+- Triangle, trapezoidal, and Gaussian membership functions
+- Mamdani inference method
+- Centroid defuzzification
+
+### Project Structure
+
+```
+fuzzy-news2/
+├── fuzzy_news2/           # Main package
+│   ├── __init__.py        # Package exports
+│   ├── api.py             # REST API implementation
+│   ├── custom_fuzzy.py    # Custom fuzzy logic implementation
+│   ├── fuzzy_logic.py     # Fuzzy logic wrapper
+│   ├── news2.py           # NEWS-2 implementation
+│   └── utils.py           # Helper utilities
+├── tests/                 # Test suite
+├── pyproject.toml         # Project metadata and dependencies
+└── README.md              # This file
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Run the full test suite
+poetry run pytest
+
+# Run specific tests
+poetry run pytest tests/test_news2.py
+
+# Run with verbose output
+poetry run pytest -v
+```
+
+### Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Future Plans
+
+- Graphical user interface for easier use in clinical settings
+- Integration with Electronic Health Record (EHR) systems
+- Machine learning extensions to personalize risk assessments
+- Electron-based desktop application
+- Mobile application for bedside assessments
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Royal College of Physicians](https://www.rcplondon.ac.uk/) for developing the NEWS-2 system
+- The fuzzy logic and healthcare informatics communities
 

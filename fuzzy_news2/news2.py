@@ -8,7 +8,6 @@ from typing import Dict, List, Literal, Optional, Union
 
 from .fuzzy_logic import FuzzyLogic
 
-
 @dataclass
 class NEWS2Result:
     """Result of NEWS-2 calculation."""

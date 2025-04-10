@@ -7,6 +7,45 @@ import numpy as np
 from typing import Dict, List, Callable, Tuple, Union, Optional
 
 
+class FuzzyTerm:
+    """Represents a term of a fuzzy variable."""
+    
+    def __init__(self, variable, term_name):
+        """Initialize a fuzzy term.
+        
+        Args:
+            variable: The fuzzy variable
+            term_name: The term name
+        """
+        self.variable = variable
+        self.term_name = term_name
+    
+    def __and__(self, other):
+        """Implement the AND operation between terms.
+        
+        Args:
+            other: Another fuzzy term
+        
+        Returns:
+            AndTerms object representing the AND operation
+        """
+        return AndTerms(self, other)
+
+
+class AndTerms:
+    """Represents an AND operation between fuzzy terms."""
+    
+    def __init__(self, left, right):
+        """Initialize an AND operation.
+        
+        Args:
+            left: Left term
+            right: Right term
+        """
+        self.left = left
+        self.right = right
+
+
 class FuzzyVariable:
     """Represents a fuzzy variable with membership functions."""
     
@@ -30,6 +69,21 @@ class FuzzyVariable:
         """
         self.terms[name] = mf_func
         return self
+    
+    def __getitem__(self, term_name):
+        """Make the variable subscriptable to access terms.
+        
+        Args:
+            term_name: Name of the term to access
+            
+        Returns:
+            FuzzyTerm object for this variable and term
+        """
+        if term_name not in self.terms:
+            raise KeyError(f"Term '{term_name}' not found in variable '{self.name}'")
+        
+        # Return a FuzzyTerm that can be used in rules
+        return FuzzyTerm(self, term_name)
 
 
 class FuzzyRule:

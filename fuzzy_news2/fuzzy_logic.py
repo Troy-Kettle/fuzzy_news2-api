@@ -10,7 +10,9 @@ from .custom_fuzzy import (
     CustomFuzzyLogic,
     create_trimf,
     create_trapmf,
-    create_gaussmf
+    create_gaussmf,
+    FuzzyTerm,
+    AndTerms
 )
 
 
@@ -100,18 +102,17 @@ class FuzzyLogic:
         consequent_tuple = None
         
         # Parse the rule expressions
-        # This is a simplified version that assumes antecedent_combination is a simple AND expression
-        # For a full implementation, we would need to parse more complex expressions
-        if hasattr(antecedent_combination, 'term') and hasattr(antecedent_combination, 'parent'):
-            # Single antecedent case
+        if isinstance(antecedent_combination, FuzzyTerm):
+            # Single FuzzyTerm
+            var = antecedent_combination.variable
+            term = antecedent_combination.term_name
+            antecedent_dict[var.name] = term
+        elif isinstance(antecedent_combination, AndTerms):
+            # AND operation between FuzzyTerms
+            self._extract_terms_from_and_terms(antecedent_combination, antecedent_dict)
+        elif isinstance(antecedent_combination, Term):
+            # Single antecedent case from scikit-fuzzy
             antecedent_dict[antecedent_combination.parent.label] = antecedent_combination.term
-        elif hasattr(antecedent_combination, 'left') and hasattr(antecedent_combination, 'right'):
-            # AND operation between two antecedents
-            if hasattr(antecedent_combination.left, 'term') and hasattr(antecedent_combination.left, 'parent'):
-                antecedent_dict[antecedent_combination.left.parent.label] = antecedent_combination.left.term
-            
-            if hasattr(antecedent_combination.right, 'term') and hasattr(antecedent_combination.right, 'parent'):
-                antecedent_dict[antecedent_combination.right.parent.label] = antecedent_combination.right.term
         else:
             # Try to handle strings or other simple types
             parts = str(antecedent_combination).split('&')
@@ -121,7 +122,11 @@ class FuzzyLogic:
                     antecedent_dict[var_term[0]] = var_term[1]
         
         # Extract consequent
-        if hasattr(consequent_result, 'term') and hasattr(consequent_result, 'parent'):
+        if isinstance(consequent_result, FuzzyTerm):
+            var = consequent_result.variable
+            term = consequent_result.term_name
+            consequent_tuple = (var.name, term)
+        elif isinstance(consequent_result, Term):
             consequent_tuple = (consequent_result.parent.label, consequent_result.term)
         else:
             # Try to handle strings
@@ -136,6 +141,28 @@ class FuzzyLogic:
         rule = self.system.add_rule(antecedent_dict, consequent_tuple)
         self.rules.append(rule)
         return rule
+    
+    def _extract_terms_from_and_terms(self, and_terms, antecedent_dict):
+        """
+        Extract terms from an AndTerms object.
+        
+        Args:
+            and_terms: AndTerms to extract from
+            antecedent_dict: Dictionary to store extracted terms
+        """
+        if isinstance(and_terms.left, FuzzyTerm):
+            var = and_terms.left.variable
+            term = and_terms.left.term_name
+            antecedent_dict[var.name] = term
+        elif isinstance(and_terms.left, AndTerms):
+            self._extract_terms_from_and_terms(and_terms.left, antecedent_dict)
+        
+        if isinstance(and_terms.right, FuzzyTerm):
+            var = and_terms.right.variable
+            term = and_terms.right.term_name
+            antecedent_dict[var.name] = term
+        elif isinstance(and_terms.right, AndTerms):
+            self._extract_terms_from_and_terms(and_terms.right, antecedent_dict)
     
     def build_control_system(self, rules):
         """
@@ -164,7 +191,7 @@ class FuzzyLogic:
             raise RuntimeError(f"Error computing fuzzy result: {str(e)}")
 
 
-# Create mock classes to mimic skfuzzy's API for backward compatibility
+# Create classes to mimic skfuzzy's API for backward compatibility
 
 class Term:
     def __init__(self, parent, term):
@@ -227,9 +254,17 @@ class control:
             self.input = {}
             self.output = {}
         
+        def input(self, input_dict):
+            """Set input values."""
+            self.input = input_dict
+        
         def compute(self):
+            """Compute the fuzzy inference."""
             # This is a mock implementation
             # In a real implementation, this would compute the fuzzy inference
             for consequent in self.control_system.consequents:
                 self.output[consequent.label] = 5.0  # Dummy value
-
+        
+        def output(self):
+            """Get output values."""
+            return self.output
